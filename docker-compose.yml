@@ -1,0 +1,19 @@
+# SafeSender Docker Compose - Principal
+version: '3.8'
+
+services:
+  safesender:
+    build: .
+    container_name: safesender-app
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/api/status')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s

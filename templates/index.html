@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeSender - Mensajería Anónima E2EE</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Estilos personalizados -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header -->
+        <header class="py-3 border-bottom">
+            <h1>
+                [*] SAFESENDER v1.0 - E2EE SECURE MESSAGING
+            </h1>
+            <p class="lead">// anonymous encrypted communication terminal</p>
+            
+            <!-- Indicador de estado del usuario -->
+            <div id="userStatus" class="mt-2">
+                <span>[INIT] Generating encryption keys...</span>
+            </div>
+        </header>
+
+        <div class="row mt-4">
+            <!-- Panel de envío de mensajes -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            [SEND] ENCRYPT & TRANSMIT
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="sendMessageForm">
+                            <div class="mb-3">
+                                <label for="recipientId" class="form-label">
+                                    target_id:
+                                </label>
+                                <input type="text" 
+                                       class="form-control font-monospace" 
+                                       id="recipientId" 
+                                       placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                                       required>
+                                <div class="form-text">
+                                    // recipient must provide their anonymous uuid
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="messageText" class="form-label">
+                                    message_data:
+                                </label>
+                                <textarea class="form-control" 
+                                          id="messageText" 
+                                          rows="4" 
+                                          placeholder="enter message here. will be encrypted before transmission."
+                                          required></textarea>
+                                <div class="form-text">
+                                    // max 10k chars. local encryption before send
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary w-100" id="sendButton">
+                                [ENCRYPT] & [SEND]
+                            </button>
+                        </form>
+                        
+                        <!-- Resultado del envío -->
+                        <div id="sendResult" class="mt-3" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel de recepción de mensajes -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            [RECV] INCOMING MESSAGES
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <small class="text-muted">
+                                // auto-destruct on read or 10min timeout
+                            </small>
+                            <button class="btn btn-outline-secondary btn-sm" id="refreshMessages">
+                                [REFRESH]
+                            </button>
+                        </div>
+                        
+                        <!-- Lista de mensajes -->
+                        <div id="messagesList">
+                            <div class="text-center text-muted py-4">
+                                <p>// no new messages found</p>
+                                <p>// waiting for encrypted data...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de información del usuario -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            [USER] ANONYMOUS IDENTITY
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <label class="form-label">your_uuid (share to receive messages):</label>
+                                <div class="input-group">
+                                    <input type="text" 
+                                           class="form-control font-monospace" 
+                                           id="yourUserId" 
+                                           readonly>
+                                    <button class="btn btn-outline-secondary" 
+                                            type="button" 
+                                            id="copyIdButton"
+                                            data-bs-toggle="tooltip" 
+                                            title="Copy ID">
+                                        [COPY]
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">crypto_status:</label>
+                                <div id="encryptionStatus" class="alert alert-warning" role="alert">
+                                    [INIT] loading...
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                // total privacy: completely anonymous identity<br>
+                                // no ips, emails, or personal data stored<br>
+                                // encryption keys generated locally, never transmitted
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer informativo -->
+        <footer class="text-center py-3 mt-5 border-top">
+            <div class="row">
+                <div class="col-12">
+                    <div class="row mt-2">
+                        <div class="col-md-3">
+                            <p class="small">[ANON]<br>anonymous</p>
+                        </div>
+                        <div class="col-md-3">
+                            <p class="small">[E2EE]<br>encrypted</p>
+                        </div>
+                        <div class="col-md-3">
+                            <p class="small">[TEMP]<br>ephemeral</p>
+                        </div>
+                        <div class="col-md-3">
+                            <p class="small">[PRIV]<br>no logs</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-2">
+                <small class="text-muted">
+                    // safesender v1.0 - https only in production
+                </small>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modales -->
+    
+    <!-- Modal para mostrar mensaje descifrado -->
+    <div class="modal fade" id="messageModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        [DECRYPT] MESSAGE DECRYPTED
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">decrypted_content:</label>
+                        <div class="alert alert-light border" id="decryptedMessage" style="white-space: pre-wrap;"></div>
+                    </div>
+                    <div id="senderInfo" style="display: none;">
+                        <label class="form-label">sender_id:</label>
+                        <code id="senderIdDisplay" class="d-block p-2"></code>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            // warning: message will self-destruct on window close
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">
+                        [CLOSE] & [DESTRUCT]
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/crypto.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
