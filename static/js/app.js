@@ -11,7 +11,7 @@ class VelumPipeApp {
         this.currentUserId = null;
         this.isInitialized = false;
         this.messageCheckInterval = null;
-        this.MESSAGE_CHECK_INTERVAL = 5000; // 5 segundos
+        this.MESSAGE_CHECK_INTERVAL = 5000; // 5 seconds
     }
 
     /**
@@ -55,7 +55,7 @@ class VelumPipeApp {
             const cryptoResult = await window.velumPipeCrypto.initialize();
             this.currentUserId = cryptoResult.userId;
             
-            // Actualizar UI con información del usuario
+            // Update UI with user information
             this.updateUserInfo(cryptoResult.userId);
             this.updateUserStatus('encryption system active', 'success');
             
@@ -66,7 +66,7 @@ class VelumPipeApp {
     }
 
     /**
-     * Configura los event listeners de la interfaz
+     * Set up interface event listeners
      */
     setupUI() {
         // Formulario de envío de mensajes
@@ -75,7 +75,7 @@ class VelumPipeApp {
             this.sendMessage();
         });
 
-        // Botón de actualizar mensajes
+        // Refresh messages button
         document.getElementById('refreshMessages').addEventListener('click', () => {
             this.checkForMessages();
         });
@@ -95,11 +95,11 @@ class VelumPipeApp {
         document.getElementById('recipientId').addEventListener('input', this.validateRecipientId);
         document.getElementById('messageText').addEventListener('input', this.validateMessageText);
 
-        console.log('[APP] Event listeners configurados');
+        console.log('[APP] Event listeners configured');
     }
 
     /**
-     * Actualiza la información del usuario en la UI
+     * Update user information in the UI
      */
     updateUserInfo(userId) {
         document.getElementById('yourUserId').value = userId;
@@ -110,7 +110,7 @@ class VelumPipeApp {
     }
 
     /**
-     * Actualiza el estado del usuario
+     * Update user status
      */
     updateUserStatus(message, type = 'info') {
         const statusElement = document.getElementById('userStatus');
@@ -233,7 +233,7 @@ class VelumPipeApp {
     }
 
     /**
-     * Muestra los mensajes en la interfaz
+     * Display messages in the interface
      */
     displayMessages(messages) {
         const messagesList = document.getElementById('messagesList');
@@ -255,8 +255,16 @@ class VelumPipeApp {
                 `<small class="text-muted">from: ${message.sender_id.substring(0, 8)}...</small>` : 
                 `<small class="text-muted">// anonymous sender</small>`;
             
+            // Create a data object for the onclick handler
+            const messageData = {
+                id: message.id,
+                encrypted_data: message.encrypted_data,
+                sender_id: message.sender_id,
+                timestamp: message.timestamp
+            };
+            
             messagesHTML += `
-                <div class="message-item fade-in-up" data-message-id="${message.id}" onclick="app.openMessage('${message.id}', ${JSON.stringify(message.encrypted_data).replace(/"/g, '&quot;')})">
+                <div class="message-item fade-in-up" data-message-id="${message.id}" onclick="app.openMessageFromList('${message.id}', ${index})">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="flex-grow-1">
                             <div class="message-preview">
@@ -276,38 +284,65 @@ class VelumPipeApp {
         });
 
         messagesList.innerHTML = messagesHTML;
-        console.log('[APP] Mostrando', messages.length, 'mensajes nuevos');
+        
+        // Store messages for later access
+        this.currentMessages = messages;
+        console.log('[APP] Displaying', messages.length, 'new messages');
     }
 
     /**
-     * Abre y descifra un mensaje
+     * Open message from the messages list
      */
-    async openMessage(messageId, encryptedData) {
+    async openMessageFromList(messageId, messageIndex) {
+        if (this.currentMessages && this.currentMessages[messageIndex]) {
+            const message = this.currentMessages[messageIndex];
+            await this.openMessage(messageId, message.encrypted_data, {
+                sender_id: message.sender_id,
+                timestamp: message.timestamp
+            });
+        }
+    }
+
+    /**
+     * Open and decrypt a message
+     */
+    async openMessage(messageId, encryptedData, senderInfo = null) {
         try {
-            console.log('[APP] Descifrando mensaje:', messageId);
+            console.log('[APP] Decrypting message:', messageId);
             
-            // Mostrar modal de carga
+            // Show loading modal
             const modal = new bootstrap.Modal(document.getElementById('messageModal'));
             document.getElementById('decryptedMessage').innerHTML = `
                 <div class="text-center">
                     <p>[DECRYPTING] processing encrypted data...</p>
                 </div>
             `;
+            
+            // Show sender info if available
+            const senderInfoDiv = document.getElementById('senderInfo');
+            if (senderInfo && senderInfo.sender_id) {
+                senderInfoDiv.style.display = 'block';
+                document.getElementById('senderIdDisplay').textContent = senderInfo.sender_id;
+                document.getElementById('copySenderIdBtn').setAttribute('data-sender-id', senderInfo.sender_id);
+            } else {
+                senderInfoDiv.style.display = 'none';
+            }
+            
             modal.show();
 
-            // Descifrar mensaje
+            // Decrypt message
             const decryptedText = await window.velumPipeCrypto.decryptMessage(encryptedData);
             
-            // Mostrar mensaje descifrado
+            // Show decrypted message
             document.getElementById('decryptedMessage').textContent = decryptedText;
             
-            // Marcar como leído en el servidor (para autodestrucción)
+            // Mark as read on server (for auto-destruction)
             await this.markMessageAsRead(messageId);
             
-            // Almacenar ID para autodestrucción al cerrar
+            // Store ID for auto-destruction on close
             document.getElementById('messageModal').setAttribute('data-message-id', messageId);
             
-            console.log('[APP] ✅ Mensaje descifrado y mostrado');
+            console.log('[APP] Message decrypted and displayed successfully');
 
         } catch (error) {
             console.error('[APP] ❌ Error descifrando mensaje:', error);
@@ -358,7 +393,7 @@ class VelumPipeApp {
             document.getElementById('senderInfo').style.display = 'none';
             event.target.removeAttribute('data-message-id');
             
-            // Actualizar lista de mensajes
+            // Update messages list
             this.checkForMessages();
         }
     }
@@ -423,7 +458,7 @@ class VelumPipeApp {
         `;
         resultDiv.style.display = 'block';
         
-        // Auto-ocultar después de 5 segundos
+        // Auto-hide after 5 seconds
         setTimeout(() => {
             resultDiv.style.display = 'none';
         }, 5000);
@@ -477,7 +512,7 @@ class VelumPipeApp {
             input.classList.remove('is-invalid');
         }
         
-        // Mostrar contador de caracteres
+        // Show character counter
         const counter = document.querySelector('.char-counter') || (() => {
             const counter = document.createElement('small');
             counter.className = 'form-text char-counter';
@@ -485,10 +520,62 @@ class VelumPipeApp {
             return counter;
         })();
         
-        counter.textContent = `${value.length}/${maxLength} caracteres`;
+        counter.textContent = `${value.length}/${maxLength} characters`;
         counter.className = value.length > maxLength ? 
             'form-text char-counter text-danger' : 
             'form-text char-counter text-muted';
+    }
+
+    /**
+     * Copy sender ID to clipboard
+     */
+    async copySenderId() {
+        const btn = document.getElementById('copySenderIdBtn');
+        const senderId = btn.getAttribute('data-sender-id');
+        
+        if (!senderId) return;
+        
+        try {
+            await navigator.clipboard.writeText(senderId);
+            
+            // Update button text temporarily
+            const originalText = btn.textContent;
+            btn.textContent = '[COPIED]';
+            btn.classList.add('btn-success');
+            
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.classList.remove('btn-success');
+            }, 2000);
+            
+            console.log('[APP] Sender ID copied to clipboard');
+        } catch (error) {
+            console.error('[APP] Error copying sender ID:', error);
+            this.showError('Failed to copy sender ID');
+        }
+    }
+
+    /**
+     * Auto-fill recipient ID with sender ID
+     */
+    replyToSender() {
+        const btn = document.getElementById('copySenderIdBtn');
+        const senderId = btn.getAttribute('data-sender-id');
+        
+        if (senderId) {
+            document.getElementById('recipientId').value = senderId;
+            
+            // Close modal and focus on message text
+            const modal = bootstrap.Modal.getInstance(document.getElementById('messageModal'));
+            modal.hide();
+            
+            // Focus on message text after modal closes
+            setTimeout(() => {
+                document.getElementById('messageText').focus();
+            }, 300);
+            
+            console.log('[APP] Reply mode activated for sender:', senderId.substring(0, 8) + '...');
+        }
     }
 }
 
