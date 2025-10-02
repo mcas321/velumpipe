@@ -114,11 +114,11 @@ pip install gunicorn
 gunicorn --workers 4 --bind 0.0.0.0:8000 app:app
 ```
 
-3. **Proxy Reverso**: Usar nginx o Apache con SSL
+3. Reverse Proxy: Use nginx or Apache with SSL
 ```nginx
 server {
     listen 443 ssl;
-    server_name tu-dominio.com;
+    server_name your-domain.com;
     
     ssl_certificate /path/to/certificate.crt;
     ssl_certificate_key /path/to/private.key;
@@ -167,11 +167,11 @@ export SECRET_KEY="your-very-secure-secret-key"
 4. Local Keys: If you lose your browser, you lose access to messages
 5. No Backup: Messages cannot be recovered once deleted
 
-## 🤝 Contribuir
+## Contributing
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+1. Fork the project
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
