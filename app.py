@@ -1,6 +1,6 @@
 """
 VelumPipe - Anonymous messaging with end-to-end encryption
-===========================================================
+====            sender_id: sender_id  # Can be None for total anonymity======================================================
 
 Simple messaging app where messages are encrypted on the client side
 before being sent to the server. The server never sees message content
@@ -26,38 +26,38 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-# Configuración de seguridad
+# Security configuration
 app.config['SECRET_KEY'] = os.urandom(24)
 
-# Almacenamiento en memoria para mensajes cifrados (efímero)
-# Estructura: {user_id: [{'id': msg_id, 'encrypted_data': data, 'timestamp': time, 'read': bool}]}
+# In-memory storage for encrypted messages (ephemeral)
+# Structure: {user_id: [{'id': msg_id, 'encrypted_data': data, 'timestamp': time, 'read': bool}]}
 encrypted_messages = {}
 
-# Almacén de claves públicas de usuarios
-# Estructura: {user_id: public_key_jwk}
+# User public keys storage
+# Structure: {user_id: public_key_jwk}
 user_public_keys = {}
 
-# Configuración de autodestrucción de mensajes
-MESSAGE_LIFETIME_MINUTES = 10  # Los mensajes se borran tras 10 minutos
-CLEANUP_INTERVAL_SECONDS = 60  # Limpieza cada minuto
+# Message auto-destruction configuration
+MESSAGE_LIFETIME_MINUTES = 10  # Messages are deleted after 10 minutes
+CLEANUP_INTERVAL_SECONDS = 60  # Cleanup every minute
 
 class MessageManager:
-    """Gestor de mensajes cifrados con autodestrucción"""
+    """Encrypted message manager with auto-destruction"""
     
     def __init__(self):
         self.start_cleanup_thread()
     
     def store_message(self, recipient_id, encrypted_data, sender_id=None):
         """
-        Almacena un mensaje cifrado para un destinatario
+        Store an encrypted message for a recipient
         
         Args:
-            recipient_id: ID del destinatario
-            encrypted_data: Datos del mensaje cifrado (dict con encrypted_message, iv, etc.)
-            sender_id: ID del remitente (opcional para anonimato)
+            recipient_id: Recipient's ID
+            encrypted_data: Encrypted message data (dict with encrypted_message, iv, etc.)
+            sender_id: Sender's ID (optional for anonymity)
         
         Returns:
-            message_id: ID único del mensaje
+            message_id: Unique message ID
         """
         message_id = str(uuid.uuid4())
         timestamp = datetime.now()
@@ -316,24 +316,26 @@ def status():
         'message_lifetime_minutes': MESSAGE_LIFETIME_MINUTES
     })
 
+# Application startup information
+print("="*60)
+print("VelumPipe - Anonymous E2E Encrypted Messaging")
+print("="*60)
+print("IMPORTANT: Use HTTPS only in production")
+print("Encryption: WebCrypto API (client-side)")
+print(f"Message lifetime: {MESSAGE_LIFETIME_MINUTES} minutes")
+print("No IP logging or personal data storage")
+print("="*60)
+
 if __name__ == '__main__':
+    # Development server (only for local testing)
     import os
     
-    print("="*60)
-    print("VelumPipe - Anonymous E2E Encrypted Messaging")
-    print("="*60)
-    print("IMPORTANT: Use HTTPS only in production")
-    print("Encryption: WebCrypto API (client-side)")
-    print(f"Message lifetime: {MESSAGE_LIFETIME_MINUTES} minutes")
-    print("No IP logging or personal data storage")
-    print("="*60)
-    
-    # Configuración para Docker/Producción
     port = int(os.environ.get('PORT', 5000))
-    host = os.environ.get('HOST', '0.0.0.0')  # 0.0.0.0 para Docker
+    host = os.environ.get('HOST', '0.0.0.0')
     debug = os.environ.get('FLASK_ENV', 'production') != 'production'
     
-    print(f"Starting server at {host}:{port}")
+    print(f"Starting development server at {host}:{port}")
     print(f"Debug mode: {debug}")
+    print("WARNING: Use Gunicorn in production!")
     
     app.run(debug=debug, host=host, port=port)
