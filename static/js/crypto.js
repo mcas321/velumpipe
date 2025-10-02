@@ -1,17 +1,17 @@
 /**
- * SafeSender - Módulo de Criptografía E2EE
- * ==========================================
+ * VelumPipe - E2E Encryption Module
+ * ==================================
  * 
- * Este módulo maneja todo el cifrado y descifrado usando WebCrypto API.
- * Las claves privadas NUNCA salen del navegador del usuario.
+ * Handles all encryption and decryption using WebCrypto API.
+ * Private keys NEVER leave the user's browser.
  * 
- * Algoritmos utilizados:
- * - RSA-OAEP para cifrado asimétrico (claves de 2048 bits)
- * - AES-GCM para cifrado simétrico (claves de 256 bits)
- * - Híbrido: se cifra el mensaje con AES y la clave AES con RSA
+ * Algorithms used:
+ * - RSA-OAEP for asymmetric encryption (2048-bit keys)
+ * - AES-GCM for symmetric encryption (256-bit keys)
+ * - Hybrid: encrypt message with AES and AES key with RSA
  */
 
-class SafeSenderCrypto {
+class VelumPipeCrypto {
     constructor() {
         this.keyPair = null;
         this.userId = null;
@@ -19,18 +19,18 @@ class SafeSenderCrypto {
     }
 
     /**
-     * Inicializa el sistema criptográfico generando un par de claves RSA
-     * y un ID de usuario anónimo
+     * Initialize cryptographic system by generating RSA key pair
+     * and anonymous user ID
      */
     async initialize() {
         try {
-            console.log('[CRYPTO] Inicializando sistema criptográfico...');
+            console.log('[CRYPTO] Initializing cryptographic system...');
             
-            // Generar ID de usuario anónimo
+            // Generate anonymous user ID
             this.userId = this.generateUserId();
-            console.log('[CRYPTO] ID de usuario generado:', this.userId);
+            console.log('[CRYPTO] User ID generated:', this.userId);
             
-            // Generar par de claves RSA-OAEP de 2048 bits
+            // Generate RSA-OAEP key pair (2048-bit)
             this.keyPair = await window.crypto.subtle.generateKey(
                 {
                     name: 'RSA-OAEP',
@@ -66,7 +66,7 @@ class SafeSenderCrypto {
     }
 
     /**
-     * Genera un ID de usuario anónimo usando UUID v4
+     * Generate anonymous user ID using UUID v4
      */
     generateUserId() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -77,7 +77,7 @@ class SafeSenderCrypto {
     }
 
     /**
-     * Registra la clave pública en el servidor
+     * Register public key on the server
      */
     async registerPublicKey(publicKeyJWK) {
         try {
@@ -107,7 +107,7 @@ class SafeSenderCrypto {
     }
 
     /**
-     * Obtiene la clave pública de otro usuario del servidor
+     * Get another user's public key from the server
      */
     async getPublicKey(userId) {
         try {
@@ -140,11 +140,11 @@ class SafeSenderCrypto {
     }
 
     /**
-     * Cifra un mensaje usando cifrado híbrido (AES + RSA)
+     * Encrypt message using hybrid encryption (AES + RSA)
      * 
-     * @param {string} message - Mensaje en texto plano
-     * @param {string} recipientId - ID del destinatario
-     * @returns {Object} Datos cifrados listos para enviar
+     * @param {string} message - Plaintext message
+     * @param {string} recipientId - Recipient ID
+     * @returns {Object} Encrypted data ready to send
      */
     async encryptMessage(message, recipientId) {
         try {
@@ -214,10 +214,10 @@ class SafeSenderCrypto {
     }
 
     /**
-     * Descifra un mensaje usando cifrado híbrido (RSA + AES)
+     * Decrypt message using hybrid encryption (RSA + AES)
      * 
-     * @param {Object} encryptedData - Datos cifrados recibidos
-     * @returns {string} Mensaje descifrado en texto plano
+     * @param {Object} encryptedData - Encrypted data received
+     * @returns {string} Decrypted plaintext message
      */
     async decryptMessage(encryptedData) {
         try {
@@ -276,7 +276,7 @@ class SafeSenderCrypto {
     }
 
     /**
-     * Convierte ArrayBuffer a string Base64
+     * Convert ArrayBuffer to Base64 string
      */
     arrayBufferToBase64(buffer) {
         const bytes = new Uint8Array(buffer);
@@ -288,7 +288,7 @@ class SafeSenderCrypto {
     }
 
     /**
-     * Convierte string Base64 a ArrayBuffer
+     * Convert Base64 string to ArrayBuffer
      */
     base64ToArrayBuffer(base64) {
         const binary = atob(base64);
@@ -300,7 +300,7 @@ class SafeSenderCrypto {
     }
 
     /**
-     * Genera un hash seguro de una cadena para verificación
+     * Generate secure hash of a string for verification
      */
     async generateHash(data) {
         const encoder = new TextEncoder();
@@ -310,21 +310,21 @@ class SafeSenderCrypto {
     }
 
     /**
-     * Verifica que WebCrypto API esté disponible
+     * Check if WebCrypto API is available
      */
     static isWebCryptoSupported() {
         return !!(window.crypto && window.crypto.subtle);
     }
 
     /**
-     * Obtiene información sobre las capacidades criptográficas
+     * Get information about cryptographic capabilities
      */
     getCryptoInfo() {
         return {
             isInitialized: this.isInitialized,
             userId: this.userId,
             hasKeyPair: !!this.keyPair,
-            webCryptoSupported: SafeSenderCrypto.isWebCryptoSupported(),
+            webCryptoSupported: VelumPipeCrypto.isWebCryptoSupported(),
             algorithms: {
                 asymmetric: 'RSA-OAEP-2048',
                 symmetric: 'AES-GCM-256',
@@ -334,13 +334,13 @@ class SafeSenderCrypto {
     }
 }
 
-// Instancia global del sistema criptográfico
-window.safeSenderCrypto = new SafeSenderCrypto();
+// Global instance of the cryptographic system
+window.velumPipeCrypto = new VelumPipeCrypto();
 
-// Verificar soporte de WebCrypto al cargar
-if (!SafeSenderCrypto.isWebCryptoSupported()) {
-    console.error('[CRYPTO] ❌ WebCrypto API no soportada en este navegador');
-    alert('Tu navegador no soporta WebCrypto API. Necesitas un navegador moderno para usar SafeSender.');
+// Check WebCrypto support on load
+if (!VelumPipeCrypto.isWebCryptoSupported()) {
+    console.error('[CRYPTO] WebCrypto API not supported in this browser');
+    alert('Your browser does not support WebCrypto API. You need a modern browser to use VelumPipe.');
 } else {
-    console.log('[CRYPTO] ✅ WebCrypto API disponible');
+    console.log('[CRYPTO] WebCrypto API available');
 }

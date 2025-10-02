@@ -1,8 +1,8 @@
-# SafeSender - Docker Image
+# VelumPipe - Docker Image
 FROM python:3.12-slim
 
-# Información del mantenedor
-LABEL maintainer="SafeSender"
+# Maintainer information
+LABEL maintainer="VelumPipe"
 LABEL description="Secure Anonymous E2EE Messaging"
 
 # Directorio de trabajo
@@ -17,19 +17,19 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar el resto de la aplicación
 COPY . .
 
-# Crear usuario no-root para seguridad
-RUN useradd --create-home --shell /bin/bash safesender && \
-    chown -R safesender:safesender /app
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash velumpipe && \
+    chown -R velumpipe:velumpipe /app
 
-# Cambiar a usuario no-root
-USER safesender
+# Switch to non-root user
+USER velumpipe
 
 # Exponer puerto
 EXPOSE 5000
 
-# Variables de entorno por defecto
+# Default environment variables
 ENV FLASK_ENV=production
 ENV PYTHONUNBUFFERED=1
 
-# Comando de arranque
+# Startup command
 CMD ["python", "app.py"]

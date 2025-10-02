@@ -1,114 +1,114 @@
-# SafeSender 🔒
+# VelumPipe
 
-Una aplicación web de mensajería anónima y segura con **cifrado extremo a extremo (E2EE)** que garantiza que solo el emisor y el receptor puedan leer los mensajes.
+Anonymous messaging web application with end-to-end encryption. Messages are encrypted on the client side before being sent to the server, ensuring only the sender and recipient can read them.
 
-## 🛡️ Características de Seguridad
+## Security Features
 
-- **Cifrado E2EE**: Los mensajes se cifran en el navegador antes de enviarse al servidor
-- **Completamente Anónimo**: Sin emails, contraseñas ni datos personales
-- **Claves Locales**: Las claves privadas nunca salen del navegador
-- **Mensajes Efímeros**: Se autodestruyen tras ser leídos o después de 10 minutos
-- **Sin Logs Sensibles**: No se almacenan IPs ni timestamps precisos
-- **Algoritmos Seguros**: RSA-OAEP 2048 bits + AES-GCM 256 bits
+- End-to-end encryption: Messages are encrypted in the browser before transmission
+- Anonymous: No emails, passwords, or personal data required
+- Local keys: Private keys never leave the browser
+- Ephemeral messages: Auto-delete after reading or 10 minutes timeout
+- Privacy focused: No IP logging or precise timestamps
+- Strong crypto: RSA-OAEP 2048-bit + AES-GCM 256-bit hybrid encryption
 
-## 🚀 Inicio Rápido
+## Quick Start
 
-### Instalación
+### Installation
 
-1. **Clona o descarga el proyecto**
+1. Clone or download the project
 ```bash
-cd safesender
+cd velumpipe
 ```
 
-2. **Instala las dependencias de Python**
+2. Install Python dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-3. **Ejecuta la aplicación**
+3. Run the application
 ```bash
 python app.py
 ```
 
-4. **Abre tu navegador**
+4. Open your browser
 ```
 http://127.0.0.1:5000
 ```
 
-### Uso
+### Usage
 
-1. **Al abrir la aplicación**: Se genera automáticamente tu ID anónimo y claves de cifrado
-2. **Para recibir mensajes**: Comparte tu ID anónimo con otros usuarios
-3. **Para enviar mensajes**: Ingresa el ID del destinatario y tu mensaje
-4. **Los mensajes se cifran automáticamente** antes de enviarse al servidor
-5. **Al leer un mensaje**, se descifra localmente y se autodestruye
+1. When you open the app, it automatically generates your anonymous ID and encryption keys
+2. To receive messages, share your anonymous ID with other users  
+3. To send messages, enter the recipient's ID and your message
+4. Messages are automatically encrypted before being sent to the server
+5. When reading a message, it gets decrypted locally and then auto-deletes
 
-## 🔧 Arquitectura Técnica
+## Technical Architecture
 
 ### Backend (Flask)
-- **app.py**: Servidor principal con API REST
-- **Almacenamiento en memoria**: Para mensajes cifrados (sin base de datos)
-- **Autodestrucción automática**: Hilo de limpieza cada 60 segundos
-- **APIs seguras**: Sin almacenamiento de datos sensibles
+- app.py: Main server with REST API
+- In-memory storage: For encrypted messages (no database)
+- Auto-cleanup: Background thread runs every 60 seconds
+- Secure APIs: No sensitive data storage
 
 ### Frontend
-- **HTML5 + Bootstrap 5**: Interfaz responsive y moderna
-- **WebCrypto API**: Cifrado nativo del navegador
-- **JavaScript ES6+**: Lógica de aplicación y criptografía
+- HTML5 + Bootstrap 5: Responsive modern interface
+- WebCrypto API: Native browser encryption
+- JavaScript ES6+: Application logic and cryptography
 
-### Cifrado Híbrido
-1. **Generación de claves**: RSA-OAEP 2048 bits por usuario
-2. **Cifrado del mensaje**: AES-GCM 256 bits (simétrico, rápido)
-3. **Cifrado de la clave AES**: RSA-OAEP con clave pública del destinatario
-4. **Envío al servidor**: Solo datos cifrados, nunca texto plano
+### Hybrid Encryption
+1. Key generation: RSA-OAEP 2048-bit per user
+2. Message encryption: AES-GCM 256-bit (symmetric, fast)
+3. Key encryption: RSA-OAEP with recipient's public key
+4. Server transmission: Only encrypted data, never plaintext
 
-## 📁 Estructura del Proyecto
+## Project Structure
 
 ```
-safesender/
-├── app.py                 # Backend Flask
-├── requirements.txt       # Dependencias Python
-├── README.md             # Este archivo
+velumpipe/
+├── app.py                 # Flask backend
+├── requirements.txt       # Python dependencies
+├── README.md             # This file
 ├── templates/
-│   └── index.html        # Página principal
+│   └── index.html        # Main page
 └── static/
     ├── css/
-    │   └── style.css     # Estilos personalizados
+    │   └── style.css     # Custom styles
     └── js/
-        ├── crypto.js     # Módulo de criptografía E2EE
-        └── app.js        # Lógica principal de la aplicación
+        ├── crypto.js     # E2EE cryptography module
+        └── app.js        # Main application logic
 ```
 
-## 🔐 Detalles de Seguridad
+## Security Details  
 
-### Cifrado Extremo a Extremo
-- **RSA-OAEP-2048**: Para cifrado asimétrico de claves
-- **AES-GCM-256**: Para cifrado simétrico de mensajes
-- **SHA-256**: Para funciones hash
-- **WebCrypto API**: Implementación nativa y segura del navegador
+### End-to-End Encryption
+- RSA-OAEP-2048: For asymmetric key encryption
+- AES-GCM-256: For symmetric message encryption  
+- SHA-256: For hash functions
+- WebCrypto API: Native secure browser implementation
 
-### Privacidad y Anonimato
-- **IDs UUID v4**: Identificadores aleatorios sin datos personales
-- **Sin autenticación**: No requiere cuentas ni contraseñas
-- **Sin logs de IP**: El servidor no almacena información de conexión
-- **Sin persistencia**: Los datos se almacenan solo en memoria
+### Privacy and Anonymity
+- UUID v4 IDs: Random identifiers with no personal data
+- No authentication: No accounts or passwords required
+- No IP logging: Server doesn't store connection information
+- No persistence: Data stored only in memory
 
-### Mensajes Efímeros
-- **Autodestrucción por lectura**: Se eliminan al ser descifrados
-- **Autodestrucción por tiempo**: Se eliminan tras 10 minutos
-- **Limpieza automática**: Hilo de limpieza cada 60 segundos
+### Ephemeral Messages
+- Auto-delete on read: Messages are deleted when decrypted
+- Time-based deletion: Messages expire after 10 minutes
+- Automatic cleanup: Background cleanup thread runs every 60 seconds
 
-## 🚀 Despliegue en Producción
+## Production Deployment
 
-### Requisitos Críticos para Producción
+### Critical Production Requirements
 
-1. **HTTPS Obligatorio**: SafeSender SOLO debe usarse con HTTPS
+1. HTTPS Required: VelumPipe should ONLY be used with HTTPS
 ```bash
-# Ejemplo con gunicorn y certificado SSL
+# Example with gunicorn and SSL certificate
 gunicorn --bind 0.0.0.0:443 --keyfile=private.key --certfile=certificate.crt app:app
 ```
 
-2. **Servidor WSGI**: No usar el servidor de desarrollo de Flask
+2. WSGI Server: Don't use Flask's development server
 ```bash
 pip install gunicorn
 gunicorn --workers 4 --bind 0.0.0.0:8000 app:app
@@ -131,55 +131,55 @@ server {
 }
 ```
 
-4. **Variables de Entorno**
+4. Environment Variables
 ```bash
 export FLASK_ENV=production
-export SECRET_KEY="tu-clave-secreta-muy-segura"
+export SECRET_KEY="your-very-secure-secret-key"
 ```
 
-### Configuraciones Adicionales de Seguridad
+### Additional Security Configurations
 
-- **Content Security Policy (CSP)**
-- **HSTS Headers**
-- **Rate Limiting**
-- **Firewall de Aplicación Web (WAF)**
+- Content Security Policy (CSP)
+- HSTS Headers  
+- Rate Limiting
+- Web Application Firewall (WAF)
 
-## 🧪 Testing
+## Testing
 
-### Probar Localmente
-1. Abre dos ventanas de navegador en modo incógnito
-2. En cada ventana, ve a `http://127.0.0.1:5000`
-3. Copia el ID de una ventana
-4. En la otra ventana, envía un mensaje a ese ID
-5. Actualiza los mensajes para ver el mensaje cifrado
-6. Haz clic en el mensaje para descifrarlo
+### Test Locally
+1. Open two browser windows in incognito mode
+2. Go to `http://127.0.0.1:5000` in each window
+3. Copy the ID from one window
+4. In the other window, send a message to that ID
+5. Refresh messages to see the encrypted message
+6. Click the message to decrypt it
 
-### Verificar Cifrado
-- Abre las herramientas de desarrollador (F12)
-- Ve a la pestaña "Network"
-- Envía un mensaje y verifica que el payload esté cifrado
+### Verify Encryption
+- Open developer tools (F12)
+- Go to the Network tab
+- Send a message and verify the payload is encrypted
 
-## ⚠️ Advertencias de Seguridad
+## Security Warnings
 
-1. **HTTPS Obligatorio**: Nunca uses HTTP en producción
-2. **Navegadores Modernos**: Requiere soporte de WebCrypto API
-3. **JavaScript Habilitado**: La aplicación no funciona sin JavaScript
-4. **Claves Locales**: Si pierdes el navegador, pierdes acceso a los mensajes
-5. **Sin Respaldo**: Los mensajes no se pueden recuperar una vez eliminados
+1. HTTPS Required: Never use HTTP in production
+2. Modern Browsers: Requires WebCrypto API support
+3. JavaScript Required: App doesn't work without JavaScript
+4. Local Keys: If you lose your browser, you lose access to messages
+5. No Backup: Messages cannot be recovered once deleted
 
 ## 🤝 Contribuir
 
 1. Fork el proyecto
 2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
 3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## 📄 Licencia
+## License
 
-Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
+This project is licensed under the MIT License. See `LICENSE` for details.
 
-## 🔗 Referencias
+## References
 
 - [WebCrypto API Documentation](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API)
 - [Flask Documentation](https://flask.palletsprojects.com/)
@@ -188,4 +188,4 @@ Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
 
 ---
 
-**SafeSender v1.0** - Mensajería anónima y segura con cifrado extremo a extremo 🔒
+**VelumPipe v1.0** - Anonymous secure messaging with end-to-end encryption

@@ -1,16 +1,17 @@
 """
-SafeSender - Aplicación de mensajería anónima con cifrado E2EE
-================================================================
+VelumPipe - Anonymous messaging with end-to-end encryption
+===========================================================
 
-Esta aplicación permite el intercambio de mensajes cifrados de extremo a extremo,
-donde el servidor nunca ve el contenido en texto plano ni las claves privadas.
+Simple messaging app where messages are encrypted on the client side
+before being sent to the server. The server never sees message content
+or private keys.
 
-Características de seguridad:
-- Cifrado E2EE usando WebCrypto API en el navegador
-- IDs de usuario anónimos generados aleatoriamente
-- Mensajes autodestructivos (se borran tras ser leídos o por tiempo)
-- No se almacenan IPs ni logs sensibles
-- Comunicación solo con HTTPS en producción
+Security features:
+- Client-side encryption using WebCrypto API
+- Anonymous user IDs generated randomly
+- Messages auto-delete after being read or after timeout
+- No IP logging or sensitive data storage
+- HTTPS required for production use
 """
 
 from flask import Flask, render_template, request, jsonify
@@ -74,7 +75,7 @@ class MessageManager:
         
         encrypted_messages[recipient_id].append(message)
         
-        print(f"[INFO] Mensaje cifrado almacenado para usuario {recipient_id[:8]}...")
+        print(f"[INFO] Encrypted message stored for user {recipient_id[:8]}...")
         return message_id
     
     def get_messages(self, user_id):
@@ -315,24 +316,16 @@ def status():
         'message_lifetime_minutes': MESSAGE_LIFETIME_MINUTES
     })
 
-@app.route('/health')
-def health():
-    """Health check endpoint para Railway y otros servicios"""
-    return jsonify({
-        'status': 'healthy',
-        'service': 'safesender'
-    }), 200
-
 if __name__ == '__main__':
     import os
     
     print("="*60)
-    print("🔒 SafeSender - Mensajería Anónima con Cifrado E2EE")
+    print("VelumPipe - Anonymous E2E Encrypted Messaging")
     print("="*60)
-    print("⚠️  IMPORTANTE: En producción usar HTTPS únicamente")
-    print("🔑 Cifrado: WebCrypto API (cliente)")
-    print(f"⏰ Autodestrucción: {MESSAGE_LIFETIME_MINUTES} minutos")
-    print("🚫 Sin logs de IP ni datos personales")
+    print("IMPORTANT: Use HTTPS only in production")
+    print("Encryption: WebCrypto API (client-side)")
+    print(f"Message lifetime: {MESSAGE_LIFETIME_MINUTES} minutes")
+    print("No IP logging or personal data storage")
     print("="*60)
     
     # Configuración para Docker/Producción
@@ -340,7 +333,7 @@ if __name__ == '__main__':
     host = os.environ.get('HOST', '0.0.0.0')  # 0.0.0.0 para Docker
     debug = os.environ.get('FLASK_ENV', 'production') != 'production'
     
-    print(f"🚀 Iniciando en {host}:{port}")
-    print(f"🔧 Modo debug: {debug}")
+    print(f"Starting server at {host}:{port}")
+    print(f"Debug mode: {debug}")
     
     app.run(debug=debug, host=host, port=port)

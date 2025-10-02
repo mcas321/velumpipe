@@ -1,12 +1,12 @@
 /**
- * SafeSender - Aplicación Principal
- * ==================================
+ * VelumPipe - Main Application
+ * ============================
  * 
- * Controla la interfaz de usuario y coordina las operaciones de cifrado,
- * envío y recepción de mensajes anónimos.
+ * Controls the user interface and coordinates encryption operations,
+ * sending and receiving anonymous messages.
  */
 
-class SafeSenderApp {
+class VelumPipeApp {
     constructor() {
         this.currentUserId = null;
         this.isInitialized = false;
@@ -15,14 +15,14 @@ class SafeSenderApp {
     }
 
     /**
-     * Inicializa la aplicación
+     * Initialize the application
      */
     async init() {
         try {
-            console.log('[APP] Inicializando SafeSender...');
+            console.log('[APP] Initializing VelumPipe...');
             
             // Verificar soporte de WebCrypto
-            if (!SafeSenderCrypto.isWebCryptoSupported()) {
+            if (!VelumPipeCrypto.isWebCryptoSupported()) {
                 this.showError('Tu navegador no soporta las funciones de cifrado necesarias.');
                 return;
             }
@@ -37,7 +37,7 @@ class SafeSenderApp {
             this.startMessagePolling();
             
             this.isInitialized = true;
-            console.log('[APP] ✅ SafeSender inicializado correctamente');
+            console.log('[APP] VelumPipe initialized successfully');
             
         } catch (error) {
             console.error('[APP] ❌ Error inicializando aplicación:', error);
@@ -46,13 +46,13 @@ class SafeSenderApp {
     }
 
     /**
-     * Inicializa el sistema criptográfico
+     * Initialize the cryptographic system
      */
     async initializeCrypto() {
         try {
             this.updateUserStatus('generating crypto keys...', 'loading');
             
-            const cryptoResult = await window.safeSenderCrypto.initialize();
+            const cryptoResult = await window.velumPipeCrypto.initialize();
             this.currentUserId = cryptoResult.userId;
             
             // Actualizar UI con información del usuario
@@ -170,7 +170,7 @@ class SafeSenderApp {
             console.log('[APP] Iniciando envío de mensaje...');
 
             // Cifrar mensaje
-            const encryptedData = await window.safeSenderCrypto.encryptMessage(messageText, recipientId);
+            const encryptedData = await window.velumPipeCrypto.encryptMessage(messageText, recipientId);
             
             // Enviar al servidor
             const response = await fetch('/api/send-message', {
@@ -296,7 +296,7 @@ class SafeSenderApp {
             modal.show();
 
             // Descifrar mensaje
-            const decryptedText = await window.safeSenderCrypto.decryptMessage(encryptedData);
+            const decryptedText = await window.velumPipeCrypto.decryptMessage(encryptedData);
             
             // Mostrar mensaje descifrado
             document.getElementById('decryptedMessage').textContent = decryptedText;
@@ -494,9 +494,9 @@ class SafeSenderApp {
 
 // Inicializar aplicación cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('[APP] DOM cargado, inicializando SafeSender...');
+    console.log('[APP] DOM loaded, initializing VelumPipe...');
     
-    window.app = new SafeSenderApp();
+    window.app = new VelumPipeApp();
     await window.app.init();
 });
 
