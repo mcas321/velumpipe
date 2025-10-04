@@ -143,36 +143,41 @@ class VelumPipeApp {
     }
 
     /**
-     * Envía un mensaje cifrado
+     * Send encrypted message with validation
      */
     async sendMessage() {
         try {
             const recipientId = document.getElementById('recipientId').value.trim();
             const messageText = document.getElementById('messageText').value.trim();
             const sendButton = document.getElementById('sendButton');
-            const resultDiv = document.getElementById('sendResult');
 
-            // Validación
+            // Basic validation
             if (!recipientId || !messageText) {
-                this.showResult('Por favor, completa todos los campos', 'error');
+                this.showResult('Please complete all fields', 'error');
                 return;
             }
 
             if (!this.isValidUUID(recipientId)) {
-                this.showResult('ID de destinatario no válido', 'error');
+                this.showResult('Invalid recipient ID format', 'error');
                 return;
             }
 
-            // Deshabilitar formulario durante el envío
+            // Character count validation
+            if (messageText.length > 800) {
+                this.showResult('Message too long. Max 800 characters allowed', 'error');
+                return;
+            }
+
+            // Disable form during send
             sendButton.disabled = true;
             sendButton.innerHTML = '[ENCRYPTING] & [SENDING]...';
             
-            console.log('[APP] Iniciando envío de mensaje...');
+            console.log('[APP] Starting message send...');
 
-            // Cifrar mensaje
+            // Encrypt message
             const encryptedData = await window.velumPipeCrypto.encryptMessage(messageText, recipientId);
             
-            // Enviar al servidor
+            // Send to server
             const response = await fetch('/api/send-message', {
                 method: 'POST',
                 headers: {
@@ -181,7 +186,7 @@ class VelumPipeApp {
                 body: JSON.stringify({
                     recipient_id: recipientId,
                     encrypted_data: encryptedData,
-                    sender_id: this.currentUserId // Opcional: puede omitirse para anonimato total
+                    sender_id: this.currentUserId // Optional for anonymity
                 })
             });
 
@@ -190,19 +195,27 @@ class VelumPipeApp {
             if (result.success) {
                 this.showResult('[SUCCESS] message encrypted and transmitted', 'success');
                 
-                // Limpiar formulario
+                // Clear form
                 document.getElementById('sendMessageForm').reset();
+                // Clear character counter
+                const counter = document.querySelector('.char-counter');
+                if (counter) counter.textContent = '0/800';
                 
-                console.log('[APP] ✅ Mensaje enviado exitosamente');
+                console.log('[APP] ✅ Message sent successfully');
             } else {
-                throw new Error(result.error || 'Error desconocido');
+                // Handle rate limit error specially
+                if (response.status === 429 && result.wait_time) {
+                    this.showResult(`[RATE LIMIT] wait ${Math.ceil(result.wait_time)} seconds before sending again`, 'error');
+                } else {
+                    throw new Error(result.error || 'Unknown error');
+                }
             }
 
         } catch (error) {
-            console.error('[APP] ❌ Error enviando mensaje:', error);
+            console.error('[APP] ❌ Error sending message:', error);
             this.showResult('[ERROR] transmission failed: ' + error.message, 'error');
         } finally {
-            // Rehabilitar formulario
+            // Re-enable form
             const sendButton = document.getElementById('sendButton');
             sendButton.disabled = false;
             sendButton.innerHTML = '[ENCRYPT] & [SEND]';
@@ -499,14 +512,15 @@ class VelumPipeApp {
     }
 
     /**
-     * Validación del texto del mensaje
+     * Validate message text character count
      */
     validateMessageText() {
         const input = document.getElementById('messageText');
-        const value = input.value.trim();
-        const maxLength = 10000;
+        const value = input.value;
+        const maxChars = 800;
+        const charCount = value.length;
         
-        if (value.length > maxLength) {
+        if (charCount > maxChars) {
             input.classList.add('is-invalid');
         } else {
             input.classList.remove('is-invalid');
@@ -520,8 +534,8 @@ class VelumPipeApp {
             return counter;
         })();
         
-        counter.textContent = `${value.length}/${maxLength} characters`;
-        counter.className = value.length > maxLength ? 
+        counter.textContent = `${charCount}/${maxChars}`;
+        counter.className = charCount > maxChars ? 
             'form-text char-counter text-danger' : 
             'form-text char-counter text-muted';
     }

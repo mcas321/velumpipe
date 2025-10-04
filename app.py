@@ -37,9 +37,15 @@ encrypted_messages = {}
 # Structure: {user_id: public_key_jwk}
 user_public_keys = {}
 
-# Message auto-destruction configuration
+# Rate limiting storage for anonymous users
+# Structure: {ip_address: last_message_timestamp}
+rate_limit_storage = {}
+
+# Message configuration
 MESSAGE_LIFETIME_MINUTES = 10  # Messages are deleted after 10 minutes
 CLEANUP_INTERVAL_SECONDS = 60  # Cleanup every minute
+RATE_LIMIT_SECONDS = 5  # Minimum seconds between messages
+MAX_MESSAGE_CHARS = 800  # Maximum characters per message
 
 class MessageManager:
     """Encrypted message manager with auto-destruction"""
@@ -119,15 +125,17 @@ class MessageManager:
                     break
     
     def cleanup_expired_messages(self):
-        """Elimina mensajes expirados (leídos o antiguos)"""
+        """Remove expired messages and old rate limit entries"""
         current_time = datetime.now()
+        current_timestamp = time.time()
         messages_deleted = 0
         
+        # Clean expired messages
         for user_id in list(encrypted_messages.keys()):
             messages_to_keep = []
             
             for message in encrypted_messages[user_id]:
-                # Eliminar si está leído O si ha pasado el tiempo límite
+                # Remove if read OR if time limit exceeded
                 time_expired = (current_time - message['timestamp']) > timedelta(minutes=MESSAGE_LIFETIME_MINUTES)
                 
                 if not (message['read'] or time_expired):
@@ -138,11 +146,20 @@ class MessageManager:
             if messages_to_keep:
                 encrypted_messages[user_id] = messages_to_keep
             else:
-                # Eliminar usuario si no tiene mensajes
+                # Remove user if no messages
                 del encrypted_messages[user_id]
         
+        # Clean old rate limit entries (older than 1 hour)
+        rate_limit_cleaned = 0
+        for ip in list(rate_limit_storage.keys()):
+            if current_timestamp - rate_limit_storage[ip] > 3600:
+                del rate_limit_storage[ip]
+                rate_limit_cleaned += 1
+        
         if messages_deleted > 0:
-            print(f"[CLEANUP] {messages_deleted} mensajes eliminados por autodestrucción")
+            print(f"[CLEANUP] {messages_deleted} messages auto-destroyed")
+        if rate_limit_cleaned > 0:
+            print(f"[CLEANUP] {rate_limit_cleaned} rate limit entries cleaned")
     
     def start_cleanup_thread(self):
         """Inicia el hilo de limpieza automática"""
@@ -157,6 +174,29 @@ class MessageManager:
 
 # Instancia global del gestor de mensajes
 message_manager = MessageManager()
+
+def check_rate_limit(client_ip):
+    """Check if client can send a message based on rate limit"""
+    current_time = time.time()
+    
+    if client_ip in rate_limit_storage:
+        time_diff = current_time - rate_limit_storage[client_ip]
+        if time_diff < RATE_LIMIT_SECONDS:
+            return False, RATE_LIMIT_SECONDS - time_diff
+    
+    rate_limit_storage[client_ip] = current_time
+    return True, 0
+
+def validate_message_size(encrypted_data):
+    """Basic validation for message size (encrypted payload)"""
+    try:
+        # Rough estimate based on encrypted payload size
+        encrypted_content = encrypted_data.get('encrypted_message', '')
+        if len(encrypted_content) > 5000:  # Rough limit for encrypted 800 chars
+            return False
+        return True
+    except:
+        return False
 
 @app.route('/')
 def index():
@@ -219,37 +259,48 @@ def get_public_key(user_id):
 @app.route('/api/send-message', methods=['POST'])
 def send_message():
     """
-    Recibe un mensaje ya cifrado y lo almacena para el destinatario
-    
-    Body JSON esperado:
-    {
-        "recipient_id": "uuid-del-destinatario",
-        "encrypted_data": {
-            "encrypted_message": "base64...",
-            "iv": "base64...",
-            "encrypted_key": "base64..."
-        },
-        "sender_id": "uuid-del-remitente" // opcional
-    }
+    Receives encrypted message and stores it for recipient
+    Includes rate limiting and size validation
     """
     try:
+        # Get client IP for rate limiting
+        client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+        
+        # Check rate limit
+        can_send, wait_time = check_rate_limit(client_ip)
+        if not can_send:
+            return jsonify({
+                'success': False, 
+                'error': f'Rate limit exceeded. Wait {wait_time:.1f} seconds',
+                'wait_time': wait_time
+            }), 429
+        
         data = request.get_json()
         recipient_id = data.get('recipient_id')
         encrypted_data = data.get('encrypted_data')
-        sender_id = data.get('sender_id')  # Opcional para anonimato total
+        sender_id = data.get('sender_id')  # Optional for anonymity
         
         if not recipient_id or not encrypted_data:
-            return jsonify({'success': False, 'error': 'Faltan datos requeridos'}), 400
+            return jsonify({'success': False, 'error': 'Missing required data'}), 400
         
-        # Verificar que el destinatario existe (tiene clave pública registrada)
+        # Validate message size
+        if not validate_message_size(encrypted_data):
+            return jsonify({
+                'success': False, 
+                'error': 'Message too large. Max 800 characters allowed'
+            }), 413
+        
+        # Check if recipient exists
         if recipient_id not in user_public_keys:
             return jsonify({
                 'success': False, 
-                'error': 'Destinatario no encontrado'
+                'error': 'Recipient not found'
             }), 404
         
-        # Almacenar mensaje cifrado
+        # Store encrypted message
         message_id = message_manager.store_message(recipient_id, encrypted_data, sender_id)
+        
+        print(f"[INFO] Message sent from {client_ip} to {recipient_id[:8]}...")
         
         return jsonify({
             'success': True,
@@ -257,8 +308,8 @@ def send_message():
         })
         
     except Exception as e:
-        print(f"[ERROR] Error enviando mensaje: {str(e)}")
-        return jsonify({'success': False, 'error': 'Error interno del servidor'}), 500
+        print(f"[ERROR] Error sending message: {str(e)}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
 
 @app.route('/api/get-messages/<user_id>')
 def get_messages(user_id):
@@ -308,12 +359,15 @@ def mark_message_read():
 
 @app.route('/api/status')
 def status():
-    """Endpoint para verificar el estado del servidor"""
+    """Server status endpoint with rate limiting info"""
     return jsonify({
         'status': 'active',
         'users_with_keys': len(user_public_keys),
         'total_messages': sum(len(msgs) for msgs in encrypted_messages.values()),
-        'message_lifetime_minutes': MESSAGE_LIFETIME_MINUTES
+        'message_lifetime_minutes': MESSAGE_LIFETIME_MINUTES,
+        'rate_limit_seconds': RATE_LIMIT_SECONDS,
+        'max_message_chars': MAX_MESSAGE_CHARS,
+        'active_rate_limits': len(rate_limit_storage)
     })
 
 # Application startup information
